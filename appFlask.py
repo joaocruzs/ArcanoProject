@@ -20,48 +20,35 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 @app.route('/criar_envelope', methods=['POST'])
 def route_criar_envelope():
     try:
-        msg_file = request.files['mensagem']
-        pub_file = request.files['chave_publica']
-
-        caminho_msg = os.path.join(UPLOAD_FOLDER, secure_filename(msg_file.filename))
-        caminho_pub = os.path.join(UPLOAD_FOLDER, secure_filename(pub_file.filename))
-
-        msg_file.save(caminho_msg)
-        pub_file.save(caminho_pub)
+        mensagem = request.files['mensagem'].read()
+        chave_pub_pem = request.files['chave_publica'].read()
 
         modo = request.form.get('modo', 'CBC')
         tam = int(request.form.get('tam', 256))
         saida = request.form.get('saida', 'hex')
 
-        return criar_envelope(caminho_msg, caminho_pub, modo, tam, saida)
-    
+        return criar_envelope(mensagem, chave_pub_pem, modo, tam, saida)
+
     except Exception as e:
-        return f"Erro ao criar envelope: {str(e)}"
+        return f"Erro ao criar envelope: {str(e)}", 400
+
 
 # 3. ABRIR ENVELOPE
+@app.route('/abrir_envelope', methods=['POST'])
 def route_abrir_envelope():
     try:
-        msg_cif = request.files['mensagem_cifrada']
-        chave_cif = request.files['chave_cifrada']
-        iv = request.files['iv']
-        priv = request.files['chave_privada']
-
-        caminho_msg = os.path.join(UPLOAD_FOLDER, secure_filename(msg_cif.filename))
-        caminho_chave = os.path.join(UPLOAD_FOLDER, secure_filename(chave_cif.filename))
-        caminho_iv = os.path.join(UPLOAD_FOLDER, secure_filename(iv.filename))
-        caminho_priv = os.path.join(UPLOAD_FOLDER, secure_filename(priv.filename))
-
-        msg_cif.save(caminho_msg)
-        chave_cif.save(caminho_chave)
-        iv.save(caminho_iv)
-        priv.save(caminho_priv)
+        mensagem_cifrada = request.files['mensagem_cifrada'].read()
+        chave_cifrada = request.files['chave_cifrada'].read()
+        iv = request.files['iv'].read()
+        chave_privada_pem = request.files['chave_privada'].read()
 
         modo = request.form.get('modo', 'CBC')
 
-        return abrir_envelope(caminho_msg, caminho_chave, modo, caminho_iv, caminho_priv)
-    
+        return abrir_envelope(mensagem_cifrada, chave_cifrada, modo, iv, chave_privada_pem)
+
     except Exception as e:
-        return f"Erro ao abrir envelope: {str(e)}"
+        return f"Erro ao abrir envelope: {str(e)}", 400
+
 
 # 4. GERAR CHAVES
 @app.route('/gerar_chaves', methods=['POST'])
