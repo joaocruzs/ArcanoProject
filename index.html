@@ -14,21 +14,21 @@
 
     <div class="top">
       <button id="project-title" class="project-title-button">Projeto Arcano</button>
-      <button id="toggleSidebar" class="sidebar-toggle">◀ ▶</button>
+      <button id="toggleSidebar" class="sidebar-toggle">●</button>
     </div>
     
     <div class="avatar-container">
       <img id="avatar" src="imagens/icon.png" alt="Avatar">
       
       <div id="speech-bubble" class="speech hidden">
-        <button class="close-btn" onclick="fecharBalão()">×</button>
+        <button class="close-btn" onclick="fecharBalão()">✘</button>
         <span id="speech-text"></span>
       </div>
     </div>
     
 
     <div class="footer">
-      <button id="toggleAuthors"> QUEM SOMOS </button>
+      <button id="toggleAuthors"> QUEM SOMOS ●</button>
       <div id="authors" class="hidden">
         <p>Ana Valéria da Silva Coelho</p>
         <p>Débora Barros do Nascimento</p>
@@ -83,37 +83,37 @@
       
       <button id="encryptButton" class="action-button" onclick="criarEnvelope()">Criar Envelope</button>
 
-      <label>Saída:</label>
-      <div id='cryptOutput' class="output"></div>
+      <label for="cryptOutput" style="font-weight: bold; display: block; margin-top: 1em;">Saída:</label>
+      <div id="cryptOutput" class="output" style="display: flex; flex-direction: column; gap: 1em;"></div>
     </section>
 
     <!-- 4. COLUNA DESCRIPTOGRAFIA  -->
     <section style="flex: 1;">
       <h2>Abrir Envelope</h2>
+    
       <label>Mensagem cifrada:</label><br>
       <input type="file" id="mensagemCifrada"><br>
-  
+    
       <label>Chave de sessão cifrada:</label><br>
       <input type="file" id="chaveCifrada"><br>
-      
-      <label>Modo AES:</label>
-      <select name="modo_aes2">
+    
+      <label>Modo AES:</label><br>
+      <select id="modo_aes2">
         <option value="CBC">CBC</option>
         <option value="ECB">ECB</option>
       </select><br>
-
+    
       <label>Vetor de Inicialização (IV):</label><br>
-      <input type="file" id="vetorIv"><br>
-  
+      <input type="file" id="vetorIV"><br>
+    
       <label>Chave privada do destinatário:</label><br>
       <input type="file" id="chavePrivada"><br>
-  
+    
       <button id="decryptButton" class="action-button" onclick="abrirEnvelope()">Abrir Envelope</button>
-      <p id="res-abrir"></p>
-
-      <label>Saída:</label>
-      <div id="decryptOutput" class="output"></div>
-    </section>
+    
+      <label for="decryptOutputContainer" style="font-weight: bold; display: block; margin-top: 1em;">Saída:</label>
+      <div id="decryptOutputContainer" class="output-container"></div>
+    </section>  
 
   </main>
 
