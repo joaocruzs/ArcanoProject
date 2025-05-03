@@ -1,62 +1,100 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+import tempfile
 import os
 from envelopeDigital import criar_envelope, abrir_envelope, gerar_chaves
 
-
-app = Flask(__name__, static_url_path='', static_folder='.')
+# 1. APP
+app = Flask(__name__, static_folder='', static_url_path='')
 CORS(app)
 
+UPLOAD_FOLDER = 'arquivos'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# 2. Rota raiz
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
 
-# 1. PASTA DE ARQUIVOS
-UPLOAD_FOLDER = 'arquivos'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# 3. Servir arquivos gerados
+@app.route('/arquivos/<path:nome_arquivo>')
+def servir_arquivo(nome_arquivo):
+    return send_from_directory(UPLOAD_FOLDER, nome_arquivo)
 
-# 2. CRIAR ENVELOPE
+# 4. CRIAR ENVELOPE
 @app.route('/criar_envelope', methods=['POST'])
 def route_criar_envelope():
     try:
-        mensagem = request.files['mensagem'].read()
-        chave_pub_pem = request.files['chave_publica'].read()
+        # Limpar arquivos gerados anteriormente, se existirem
+        for nome in ['mensagem_cifrada.txt', 'chave_sessao_cifrada.txt', 'vetor_inicializacao.txt']:
+            caminho = os.path.join(UPLOAD_FOLDER, nome)
+            if os.path.exists(caminho):
+                os.remove(caminho)
+
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_msg, \
+             tempfile.NamedTemporaryFile(delete=False) as tmp_pub:
+
+            tmp_msg.write(request.files['mensagem'].read())
+            tmp_pub.write(request.files['chave_publica'].read())
+
+            caminho_msg = tmp_msg.name
+            caminho_pub = tmp_pub.name
 
         modo = request.form.get('modo', 'CBC')
         tam = int(request.form.get('tam', 256))
         saida = request.form.get('saida', 'hex')
 
-        return criar_envelope(mensagem, chave_pub_pem, modo, tam, saida)
+        resultado = criar_envelope(caminho_msg, caminho_pub, modo, tam, saida)
+
+        os.remove(caminho_msg)
+        os.remove(caminho_pub)
+
+        return resultado
 
     except Exception as e:
-        return f"Erro ao criar envelope: {str(e)}", 400
+        return f"Erro ao criar envelope digital: {str(e)}", 400
 
 
-# 3. ABRIR ENVELOPE
+# 5. ABRIR ENVELOPE
 @app.route('/abrir_envelope', methods=['POST'])
 def route_abrir_envelope():
     try:
-        mensagem_cifrada = request.files['mensagem_cifrada'].read()
-        chave_cifrada = request.files['chave_cifrada'].read()
-        iv = request.files['iv'].read()
-        chave_privada_pem = request.files['chave_privada'].read()
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_msg_cif, \
+             tempfile.NamedTemporaryFile(delete=False) as tmp_chave_cif, \
+             tempfile.NamedTemporaryFile(delete=False) as tmp_iv, \
+             tempfile.NamedTemporaryFile(delete=False) as tmp_priv:
+
+            tmp_msg_cif.write(request.files['mensagem_cifrada'].read())
+            tmp_chave_cif.write(request.files['chave_cifrada'].read())
+            tmp_iv.write(request.files['iv'].read())
+            tmp_priv.write(request.files['chave_privada'].read())
+
+            caminho_msg = tmp_msg_cif.name
+            caminho_chave = tmp_chave_cif.name
+            caminho_iv = tmp_iv.name
+            caminho_priv = tmp_priv.name
 
         modo = request.form.get('modo', 'CBC')
+        resultado = abrir_envelope(caminho_msg, caminho_chave, modo, caminho_iv, caminho_priv)
 
-        return abrir_envelope(mensagem_cifrada, chave_cifrada, modo, iv, chave_privada_pem)
+        os.remove(caminho_msg)
+        os.remove(caminho_chave)
+        os.remove(caminho_iv)
+        os.remove(caminho_priv)
+
+        return resultado
 
     except Exception as e:
         return f"Erro ao abrir envelope: {str(e)}", 400
 
-
-# 4. GERAR CHAVES
+# 6. GERAR CHAVES
 @app.route('/gerar_chaves', methods=['POST'])
 def route_gerar_chaves():
     data = request.get_json()
     tamanho = data.get('tamanho_chave', 2048)
     return gerar_chaves(tamanho)
 
-
+# 7. RODAR
 if __name__ == '__main__':
     app.run(debug=True)
