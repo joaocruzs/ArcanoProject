@@ -82,6 +82,7 @@ function setAvatarMode(mode) {
   }
 }
 
+// 1.3. BALÃO DE FALA
 function avatarFala(mensagem, mode) {
   const bubble = document.getElementById('speech-bubble');
   const texto = document.getElementById('speech-text');
@@ -204,17 +205,21 @@ async function abrirEnvelope() {
     });
 
     const texto = await response.text();
-    const outputDiv = document.getElementById('decryptOutput');
-    outputDiv.textContent = texto;
-
+    const outputContainer = document.getElementById('decryptOutputContainer');
+    const mensagemClaraBox = document.getElementById('mensagemClara');
+    
     if (response.ok) {
+      mensagemClaraBox.textContent = texto;
+      outputContainer.style.display = 'block';
       avatarFala('Envelope aberto com sucesso!', 'decrypto');
     } else {
+      outputContainer.style.display = 'none';
       avatarFala(texto, 'erro');
-    }
+    }    
+    
   } catch (error) {
-    console.error('Erro:', error);
-    avatarFala('Erro inesperado ao abrir envelope.', 'erro');
+    console.error('Erro de rede:', error);
+    avatarFala(`Erro de rede ou servidor: ${error.message}`, 'erro');
   }
 }
 
