@@ -18,8 +18,14 @@
     </div>
     
     <div class="avatar-container">
-      <img id="avatar" src="imagens/icon.png" alt="Avatar" />
+      <img id="avatar" src="imagens/icon.png" alt="Avatar">
+      
+      <div id="speech-bubble" class="speech hidden">
+        <button class="close-btn" onclick="fecharBalão()">×</button>
+        <span id="speech-text"></span>
+      </div>
     </div>
+    
 
     <div class="footer">
       <button id="toggleAuthors"> QUEM SOMOS </button>
@@ -45,7 +51,6 @@
           <option value="2048" selected>2048 bits</option>
       </select>
       <button onclick="gerarChaves()">Gerar</button>
-      <p id="res-chave"></p>
     </div>
 
     <!-- 3. COLUNA CRIPTOGRAFIA -->
