@@ -12,11 +12,13 @@
   <!-- 1. BARRA LATERAL-->
   <div id="sidebar" class="sidebar expanded">
 
+    <!-- 1.1 Cabeçalho -->
     <div class="top">
       <button id="project-title" class="project-title-button">Projeto Arcano</button>
       <button id="toggleSidebar" class="sidebar-toggle">●</button>
     </div>
     
+    <!-- 1.2 Avatar -->
     <div class="avatar-container">
       <img id="avatar" src="imagens/icon.png" alt="Avatar">
       
@@ -26,7 +28,7 @@
       </div>
     </div>
     
-
+    <!-- 1.3 Rodapé -->
     <div class="footer">
       <button id="toggleAuthors"> QUEM SOMOS ●</button>
       <div id="authors" class="hidden">
@@ -111,8 +113,11 @@
     
       <button id="decryptButton" class="action-button" onclick="abrirEnvelope()">Abrir Envelope</button>
     
-      <label for="decryptOutputContainer" style="font-weight: bold; display: block; margin-top: 1em;">Saída:</label>
-      <div id="decryptOutputContainer" class="output-container"></div>
+      <div id="decryptOutputContainer" class="output-container">
+        <label for="mensagemClara">Mensagem clara:</label>
+        <div id="mensagemClara"></div>
+      </div>    
+
     </section>  
 
   </main>
