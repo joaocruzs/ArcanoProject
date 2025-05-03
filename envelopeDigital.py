@@ -1,4 +1,3 @@
-
 import os
 import base64
 from cryptography.hazmat.primitives import serialization, padding as aes_padding
@@ -16,9 +15,9 @@ def criar_envelope(arquivo_claro, chave_publica_destinatario, modo, tam, saida):
         modo_aes=modo,
         tam_chave=tam,
         saida=saida,
-        nome_arquivo_mensagem='mensagem_cifrada.txt',
-        nome_arquivo_chave='chave_sessao_cifrada.txt',
-        nome_arquivo_iv='vetor_inicializacao.txt'
+        nome_arquivo_mensagem='arquivos/mensagem_cifrada.txt',
+        nome_arquivo_chave='arquivos/chave_sessao_cifrada.txt',
+        nome_arquivo_iv='arquivos/vetor_inicializacao.txt'
     )
 
 def abrir_envelope(mensagem_cifrada, chave_cifrada, modo, iv_hex, chave_privada_destinatario):
@@ -29,14 +28,14 @@ def abrir_envelope(mensagem_cifrada, chave_cifrada, modo, iv_hex, chave_privada_
         arquivo_iv=iv_hex,
         arquivo_chave_privada=chave_privada_destinatario,
         codificacao='hex',
-        nome_arquivo_saida='mensagem_clara.txt'
+        nome_arquivo_saida='arquivos/mensagem_clara.txt'
     )
 
 def gerar_chaves(tamanho_chave):
     return gerar_chaves_openssl(
         tamanho_chave=tamanho_chave,
-        arq_privada='chave_privada.pem',
-        arq_publica='chave_publica.pem'
+        arq_privada='arquivos/chave_privada.pem',
+        arq_publica='arquivos/chave_publica.pem'
     )
 
 '''def padronizar_base64_saida(texto_binario: bytes, codificacao='hex') -> bytes:
@@ -76,9 +75,9 @@ def criar_envelope_digital(
         modo_aes, 
         tam_chave, 
         saida, 
-        nome_arquivo_mensagem='mensagem_cifrada.txt', 
-        nome_arquivo_chave='chave_sessao_cifrada.txt', 
-        nome_arquivo_iv='vetor_inicializacao.txt'):
+        nome_arquivo_mensagem, 
+        nome_arquivo_chave, 
+        nome_arquivo_iv):
     
     try: # validações
         if not os.path.isfile(caminho_arquivo_mensagem):
@@ -203,7 +202,7 @@ def abrir_envelope_digital(
     except Exception as e:
         return f"Erro ao abrir envelope digital: {str(e)}"
 
-def gerar_chaves_openssl(tamanho_chave, arq_privada='chave_privada.pem', arq_publica='chave_publica.pem'):
+def gerar_chaves_openssl(tamanho_chave, arq_privada, arq_publica):
     try: #validação
         if not isinstance(tamanho_chave, int):
             raise TypeError("Tamanho da chave deve ser um número inteiro.")
