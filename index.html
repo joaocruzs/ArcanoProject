@@ -52,12 +52,10 @@
     <section style="flex: 1;">     
       <h2>Criar Envelope</h2>
       <label>Mensagem (arquivo claro):</label><br>
-      <!--<input type="file" id="arquivoMensagem"><br>-->
-      <textarea id="arquivoMensagem" rows="2" placeholder="Insira texto claro"></textarea><br>
+      <input type="file" id="arquivoMensagem"><br>
   
       <label>Chave pública do destinatário:</label><br>
-      <!--<input type="file" id="chavePublica"><br>-->
-      <textarea id="chavePublica" rows="2" placeholder="Insira chave"></textarea><br>
+      <input type="file" id="chavePublica"><br>
       
       <label>Modo AES:</label>
       <select id="modo_aes1" name="modo_aes">
@@ -88,12 +86,10 @@
     <section style="flex: 1;">
       <h2>Abrir Envelope</h2>
       <label>Mensagem cifrada:</label><br>
-      <!--<input type="file" id="mensagemCifrada"><br>-->
-      <textarea id="mensagemCifrada" rows="2" placeholder="Insira texto claro"></textarea><br>
+      <input type="file" id="mensagemCifrada"><br>
   
       <label>Chave de sessão cifrada:</label><br>
-      <!--<input type="file" id="chaveCifrada"><br>-->
-      <textarea id="chaveCifrada" rows="2" placeholder="Insira texto claro"></textarea><br>
+      <input type="file" id="chaveCifrada"><br>
       
       <label>Modo AES:</label>
       <select name="modo_aes2">
@@ -102,12 +98,10 @@
       </select><br>
 
       <label>Vetor de Inicialização (IV):</label><br>
-      <!--<input type="file" id="vetorIv"><br>-->
-      <textarea id="vetorIv" rows="1" placeholder="Insira texto claro"></textarea><br>
+      <input type="file" id="vetorIv"><br>
   
       <label>Chave privada do destinatário:</label><br>
-      <!--<input type="file" id="chavePrivada"><br>-->
-      <textarea id="chavePrivada" rows="1" placeholder="Insira texto claro"></textarea><br>
+      <input type="file" id="chavePrivada"><br>
   
       <button id="decryptButton" class="action-button" onclick="abrirEnvelope()">Abrir Envelope</button>
       <p id="res-abrir"></p>
