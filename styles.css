@@ -128,6 +128,10 @@ body {
   margin-left: auto;
 }
 
+#avatar {
+  transition: opacity 0.3s ease-in-out;
+}
+
 .hidden {
   display: none;
 }
@@ -215,10 +219,7 @@ p {
   margin: 3px 0;
 }
 
-#avatar {
-  transition: opacity 0.3s ease-in-out;
-}
-
+/* 3. OUTPUT */
 .output-box {
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -256,3 +257,24 @@ p {
 .output-box button:hover {
   background-color: #004999;
 }
+
+#decryptOutputContainer {
+  display: none;
+  margin-top: 1em;
+}
+
+#decryptOutputContainer label {
+  font-weight: bold;
+}
+
+#mensagemClara {
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  padding: 1em;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  border-radius: 8px;
+  margin-top: 0.5em;
+}
+
+
