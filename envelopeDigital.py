@@ -6,7 +6,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 
 
-# === FUNÇÕES  ===
+# === 1. FUNÇÕES CHAMADAS PELO APP ===
 
 def criar_envelope(arquivo_claro, chave_publica_destinatario, modo, tam, saida):
     return criar_envelope_digital(
@@ -38,6 +38,9 @@ def gerar_chaves(tamanho_chave):
         arq_publica='arquivos/chave_publica.pem'
     )
 
+
+# === 2. AUXILIARES ===
+
 '''def padronizar_base64_saida(texto_binario: bytes, codificacao='hex') -> bytes:
     if codificacao == 'base64':
         return base64.b64encode(texto_binario)
@@ -68,6 +71,8 @@ def validar_chave_privada(path_arquivo):
     except Exception:
         return False
 
+
+# === 3. FUNÇÕES BACK-END ===
 
 def criar_envelope_digital(
         caminho_arquivo_mensagem, 
@@ -137,8 +142,8 @@ def abrir_envelope_digital(
         arquivo_mensagem_cifrada, 
         arquivo_chaveAES_cifrada, 
         modo_aes,
-        arquivo_iv=None, 
-        arquivo_chave_privada='chave_privada.pem',  
+        arquivo_iv, 
+        arquivo_chave_privada,  
         codificacao='base64', 
         nome_arquivo_saida='mensagem_clara.txt'):
     
