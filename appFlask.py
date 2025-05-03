@@ -1,32 +1,29 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, send_from_directory
 from flask_cors import CORS
-from werkzeug.utils import secure_filename
 import tempfile
 import os
 from envelopeDigital import criar_envelope, abrir_envelope, gerar_chaves
 
-# 1. APP
+
 app = Flask(__name__, static_folder='', static_url_path='')
 CORS(app)
 
 UPLOAD_FOLDER = 'arquivos'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# 2. Rota raiz
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
 
-# 3. Servir arquivos gerados
+# 1. SERVIR ARQUIVOS GERADOS
 @app.route('/arquivos/<path:nome_arquivo>')
 def servir_arquivo(nome_arquivo):
     return send_from_directory(UPLOAD_FOLDER, nome_arquivo)
 
-# 4. CRIAR ENVELOPE
+# 2. CRIAR ENVELOPE
 @app.route('/criar_envelope', methods=['POST'])
 def route_criar_envelope():
     try:
-        # Limpar arquivos gerados anteriormente, se existirem
         for nome in ['mensagem_cifrada.txt', 'chave_sessao_cifrada.txt', 'vetor_inicializacao.txt']:
             caminho = os.path.join(UPLOAD_FOLDER, nome)
             if os.path.exists(caminho):
@@ -56,7 +53,7 @@ def route_criar_envelope():
         return f"Erro ao criar envelope digital: {str(e)}", 400
 
 
-# 5. ABRIR ENVELOPE
+# 3. ABRIR ENVELOPE
 @app.route('/abrir_envelope', methods=['POST'])
 def route_abrir_envelope():
     try:
@@ -76,25 +73,32 @@ def route_abrir_envelope():
             caminho_priv = tmp_priv.name
 
         modo = request.form.get('modo', 'CBC')
-        resultado = abrir_envelope(caminho_msg, caminho_chave, modo, caminho_iv, caminho_priv)
+
+        abrir_envelope(caminho_msg, caminho_chave, modo, caminho_iv, caminho_priv)
+
+        caminho_mensagem_clara = os.path.join('arquivos', 'mensagem_clara.txt')
+        with open(caminho_mensagem_clara, 'r', encoding='utf-8') as f:
+            mensagem = f.read()
 
         os.remove(caminho_msg)
         os.remove(caminho_chave)
         os.remove(caminho_iv)
         os.remove(caminho_priv)
+        os.remove(caminho_mensagem_clara)
 
-        return resultado
+        return mensagem
 
     except Exception as e:
         return f"Erro ao abrir envelope: {str(e)}", 400
 
-# 6. GERAR CHAVES
+
+# 4. GERAR CHAVES
 @app.route('/gerar_chaves', methods=['POST'])
 def route_gerar_chaves():
     data = request.get_json()
     tamanho = data.get('tamanho_chave', 2048)
     return gerar_chaves(tamanho)
 
-# 7. RODAR
+
 if __name__ == '__main__':
     app.run(debug=True)
