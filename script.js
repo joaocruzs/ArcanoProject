@@ -84,26 +84,20 @@ function setAvatarMode(mode) {
 
 // 2. CRIPTOGRAFIA
 function criarEnvelope() {
-  const mensagemTexto = document.getElementById('mensagemTexto').value.trim();
-  const chavePublicaTexto = document.getElementById('chavePublicaTexto').value.trim();
+  const mensagem = document.getElementById('arquivoMensagem').files[0];
+  const chavePublica = document.getElementById('chavePublica').files[0];
   const modo = document.getElementById('modo_aes1').value;
   const tam = document.getElementById('tam_chave').value;
   const saida = document.getElementById('saida').value;
 
-  if (!mensagemTexto || !chavePublicaTexto) {
-    alert('Por favor, preencha os dois campos de texto.');
+  if (!mensagem || !chavePublica) {
+    alert('Por favor, selecione os dois arquivos necessários.');
     return;
   }
 
-  const mensagemBlob = new Blob([mensagemTexto], { type: 'text/plain' });
-  const mensagemFile = new File([mensagemBlob], 'mensagem.txt');
-
-  const chaveBlob = new Blob([chavePublicaTexto], { type: 'text/plain' });
-  const chaveFile = new File([chaveBlob], 'chave_publica.pem');
-
   const formData = new FormData();
-  formData.append('mensagem', mensagemFile);
-  formData.append('chave_publica', chaveFile);
+  formData.append('mensagem', mensagem);
+  formData.append('chave_publica', chavePublica);
   formData.append('modo', modo);
   formData.append('tam', tam);
   formData.append('saida', saida);
@@ -124,26 +118,25 @@ function criarEnvelope() {
     });
 }
 
-
 // 3. DESCRIPTOGRAFIA
 async function abrirEnvelope() {
-  const mensagemCifradaTexto = document.getElementById('mensagemCifradaTexto').value.trim();
-  const chaveCifradaTexto = document.getElementById('chaveCifradaTexto').value.trim();
+  const mensagemCifrada = document.getElementById('mensagemCifrada').files[0];
+  const chaveCifrada = document.getElementById('chaveCifrada').files[0];
   const modo = document.getElementById('modo_aes2').value;
-  const ivTexto = document.getElementById('vetorIVTexto').value.trim();
-  const chavePrivadaTexto = document.getElementById('chavePrivadaTexto').value.trim();
+  const vetorIV = document.getElementById('vetorIV').files[0];
+  const chavePrivada = document.getElementById('chavePrivada').files[0];
 
-  if (!mensagemCifradaTexto || !chaveCifradaTexto || !ivTexto || !chavePrivadaTexto) {
-    alert('Por favor, preencha todos os campos necessários.');
+  if (!mensagemCifrada || !chaveCifrada || !vetorIV || !chavePrivada) {
+    alert('Por favor, selecione todos os arquivos necessários.');
     return;
   }
 
   const formData = new FormData();
-  formData.append('mensagem_cifrada', new File([mensagemCifradaTexto], 'msg_cifrada.txt'));
-  formData.append('chave_cifrada', new File([chaveCifradaTexto], 'chave_cifrada.txt'));
+  formData.append('mensagem_cifrada', mensagemCifrada);
+  formData.append('chave_cifrada', chaveCifrada);
   formData.append('modo', modo);
-  formData.append('iv', new File([ivTexto], 'iv.txt'));
-  formData.append('chave_privada', new File([chavePrivadaTexto], 'chave_privada.pem'));
+  formData.append('iv', vetorIV);
+  formData.append('chave_privada', chavePrivada);
 
   try {
     const response = await fetch('/abrir_envelope', {
@@ -159,7 +152,6 @@ async function abrirEnvelope() {
     setAvatarMode("error");
   }
 }
-
 
 // 4. GERAÇÃO DE CHAVES
 async function gerarChaves() {
