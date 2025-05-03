@@ -60,7 +60,7 @@ function setAvatarMode(mode) {
       body.style.backgroundColor = "#ddd900";
       avatar.style.borderColor = "#ddd900";
       break;
-    case "error":
+    case "erro":
       newAvatar = "imagens/iconCinza.png";
       body.style.backgroundColor = "#474747";
       avatar.style.borderColor = "#474747";
@@ -82,21 +82,23 @@ function setAvatarMode(mode) {
   }
 }
 
-function avatarFala(mensagem) {
+function avatarFala(mensagem, mode) {
   const bubble = document.getElementById('speech-bubble');
   const texto = document.getElementById('speech-text');
 
   texto.textContent = mensagem;
   bubble.classList.remove('hidden');
+  setAvatarMode(mode || "default");
 }
 
 function fecharBalão() {
   document.getElementById('speech-bubble').classList.add('hidden');
+  setAvatarMode("default");
 }
 
 
 // 2. CRIPTOGRAFIA
-function criarEnvelope() {
+async function criarEnvelope() {
   const mensagem = document.getElementById('arquivoMensagem').files[0];
   const chavePublica = document.getElementById('chavePublica').files[0];
   const modo = document.getElementById('modo_aes1').value;
@@ -104,7 +106,7 @@ function criarEnvelope() {
   const saida = document.getElementById('saida').value;
 
   if (!mensagem || !chavePublica) {
-    avatarFala('Por favor, selecione os arquivos necessários.');
+    avatarFala('Por favor, selecione os arquivos necessários.', 'erro');
     return;
   }
 
@@ -115,20 +117,65 @@ function criarEnvelope() {
   formData.append('tam', tam);
   formData.append('saida', saida);
 
-  fetch('/criar_envelope', {
-    method: 'POST',
-    body: formData
-  })
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('cryptOutput').textContent = data;
-      avatarFala('Envelope criado com sucesso!');
-    })
-    .catch(error => {
-      console.error('Erro:', error);
-      avatarFala('Erro ao criar envelope.');
+  try {
+    const response = await fetch('/criar_envelope', {
+      method: 'POST',
+      body: formData
     });
+
+    const texto = await response.text();
+
+    if (!response.ok) {
+      avatarFala(texto, 'erro');
+      return;
+    }
+
+    avatarFala(texto, 'crypto');
+
+    const arquivos = [
+      { filename: 'mensagem_cifrada.txt', label: 'Mensagem Cifrada' },
+      { filename: 'chave_sessao_cifrada.txt', label: 'Chave de Sessão Cifrada' },
+      { filename: 'vetor_inicializacao.txt', label: 'Vetor de Inicialização' }
+    ];
+
+    const outputArea = document.getElementById('cryptOutput');
+    outputArea.innerHTML = ''; // limpa área anterior
+
+    for (const { filename, label } of arquivos) {
+      try {
+        const res = await fetch(`/arquivos/${filename}`);
+        if (!res.ok) continue;
+
+        const conteudo = await res.text();
+
+        const box = document.createElement('div');
+        box.className = 'output-box';
+
+        const title = document.createElement('strong');
+        title.textContent = label;
+
+        const pre = document.createElement('pre');
+        pre.textContent = conteudo;
+
+        const btn = document.createElement('button');
+        btn.textContent = 'Copiar';
+        btn.onclick = () => {
+          navigator.clipboard.writeText(conteudo);
+          avatarFala(`${label} copiado!`);
+        };
+
+        box.append(title, pre, btn);
+        outputArea.appendChild(box);
+      } catch (e) {
+        console.warn(`Erro ao buscar ${filename}`, e);
+      }
+    }
+  } catch (error) {
+    console.error('Erro:', error);
+    avatarFala('Erro inesperado ao criar envelope.', 'erro');
+  }
 }
+
 
 // 3. DESCRIPTOGRAFIA
 async function abrirEnvelope() {
@@ -139,7 +186,7 @@ async function abrirEnvelope() {
   const chavePrivada = document.getElementById('chavePrivada').files[0];
 
   if (!mensagemCifrada || !chaveCifrada || !vetorIV || !chavePrivada) {
-    avatarFala('Por favor, selecione todos os arquivos necessários.');
+    avatarFala('Por favor, selecione todos os arquivos necessários.', 'erro');
     return;
   }
 
@@ -156,13 +203,21 @@ async function abrirEnvelope() {
       body: formData
     });
 
-    const resultado = await response.text();
-    document.getElementById('decryptOutput').innerText = resultado;
-    avatarFala('Envelope aberto com sucesso!');
+    const texto = await response.text();
+    const outputDiv = document.getElementById('decryptOutput');
+    outputDiv.textContent = texto;
+
+    if (response.ok) {
+      avatarFala('Envelope aberto com sucesso!', 'decrypto');
+    } else {
+      avatarFala(texto, 'erro');
+    }
   } catch (error) {
-    avatarFala('Erro ao abrir envelope');
+    console.error('Erro:', error);
+    avatarFala('Erro inesperado ao abrir envelope.', 'erro');
   }
 }
+
 
 // 4. GERAÇÃO DE CHAVES
 async function gerarChaves() { 
@@ -181,11 +236,10 @@ async function gerarChaves() {
       throw new Error(texto || 'Erro desconhecido ao gerar chaves.');
     }
 
-    avatarFala('Chaves geradas com sucesso!');
+    avatarFala('Chaves geradas com sucesso!', 'chaves');
   } catch (error) {
     console.error('Erro:', error);
-    avatarFala('Erro ao gerar chaves.');
-    setAvatarMode("error");
+    avatarFala('Erro ao gerar chaves.', 'erro');
   }
 }
 
