@@ -100,13 +100,15 @@
       <input type="file" id="chaveCifrada"><br>
     
       <label>Modo AES:</label><br>
-      <select id="modo_aes2">
+      <select id="modo_aes2" onchange="alternarCampoIV()">
         <option value="CBC">CBC</option>
         <option value="ECB">ECB</option>
-      </select><br>
-    
-      <label>Vetor de Inicialização (IV):</label><br>
-      <input type="file" id="vetorIV"><br>
+      </select> 
+      
+      <div id="campoIVContainer">
+        <label>Vetor de Inicialização (IV):</label><br>
+        <input type="file" id="vetorIV"><br>
+      </div>
     
       <label>Chave privada do destinatário:</label><br>
       <input type="file" id="chavePrivada"><br>
