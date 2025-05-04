@@ -1,3 +1,4 @@
+
 import os
 import base64
 from cryptography.hazmat.primitives import serialization, padding as aes_padding
@@ -6,7 +7,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 
 
-# === 1. FUNÇÕES CHAMADAS PELO APP ===
+# === FUNÇÕES  ===
 
 def criar_envelope(arquivo_claro, chave_publica_destinatario, modo, tam, saida):
     return criar_envelope_digital(
@@ -20,7 +21,7 @@ def criar_envelope(arquivo_claro, chave_publica_destinatario, modo, tam, saida):
         nome_arquivo_iv='arquivos/vetor_inicializacao.txt'
     )
 
-def abrir_envelope(mensagem_cifrada, chave_cifrada, modo, chave_privada_destinatario,  iv_hex):
+def abrir_envelope(mensagem_cifrada, chave_cifrada, modo, chave_privada_destinatario, iv_hex,):
     return abrir_envelope_digital(
         arquivo_mensagem_cifrada=mensagem_cifrada,
         arquivo_chaveAES_cifrada=chave_cifrada,
@@ -37,15 +38,6 @@ def gerar_chaves(tamanho_chave):
         arq_privada='arquivos/chave_privada.pem',
         arq_publica='arquivos/chave_publica.pem'
     )
-
-
-# === 2. AUXILIARES ===
-
-'''def padronizar_base64_saida(texto_binario: bytes, codificacao='hex') -> bytes:
-    if codificacao == 'base64':
-        return base64.b64encode(texto_binario)
-    else:
-        return texto_binario.hex().encode()'''
     
 def padronizar_base64_saida(texto_binario: bytes, codificacao='hex') -> bytes:
     if codificacao == 'base64':
@@ -72,17 +64,15 @@ def validar_chave_privada(path_arquivo):
         return False
 
 
-# === 3. FUNÇÕES BACK-END ===
-
 def criar_envelope_digital(
         caminho_arquivo_mensagem, 
         caminho_chave_publica, 
         modo_aes, 
         tam_chave, 
         saida, 
-        nome_arquivo_mensagem, 
-        nome_arquivo_chave, 
-        nome_arquivo_iv):
+        nome_arquivo_mensagem='mensagem_cifrada.txt', 
+        nome_arquivo_chave='chave_sessao_cifrada.txt', 
+        nome_arquivo_iv='vetor_inicializacao.txt'):
     
     try: # validações
         if not os.path.isfile(caminho_arquivo_mensagem):
@@ -122,6 +112,8 @@ def criar_envelope_digital(
         # criptografa chave AES
         chave_aes_cifrada = chave_publica.encrypt(chave_aes, rsa_padding.PKCS1v15())
 
+        print(chave_aes_cifrada)
+
     # Criação dos arquivos de saída
         with open(nome_arquivo_mensagem, 'wb') as f:
             f.write(padronizar_base64_saida(mensagem_cifrada, saida))
@@ -132,22 +124,24 @@ def criar_envelope_digital(
         if iv:
             with open(nome_arquivo_iv, 'wb') as f:
                 f.write(padronizar_base64_saida(iv, saida))
-
+        
+        print(nome_arquivo_chave)
         return "Envelope digital criado com sucesso."
-
+        
     except Exception as e:
         return f"Erro ao criar envelope digital: {str(e)}"
 
 def abrir_envelope_digital(
-        arquivo_mensagem_cifrada, 
-        arquivo_chaveAES_cifrada, 
-        modo_aes, 
-        arquivo_chave_privada,
-        arquivo_iv,  
-        codificacao='base64', 
-        nome_arquivo_saida='mensagem_clara.txt'):
-    
-    try: #validações
+    arquivo_mensagem_cifrada, 
+    arquivo_chaveAES_cifrada, 
+    modo_aes, 
+    arquivo_chave_privada, 
+    arquivo_iv,
+    codificacao='base64', 
+    nome_arquivo_saida='mensagem_clara.txt'
+):
+    try:
+        # Validações
         for caminho in [arquivo_mensagem_cifrada, arquivo_chaveAES_cifrada, arquivo_chave_privada]:
             if not os.path.isfile(caminho):
                 raise FileNotFoundError(f"Arquivo '{caminho}' não encontrado.")
@@ -162,43 +156,43 @@ def abrir_envelope_digital(
         if arquivo_iv and not os.path.isfile(arquivo_iv):
             raise FileNotFoundError(f"Arquivo de IV '{arquivo_iv}' não encontrado.")
 
-    # Lê mensagem cifrada, chave AES cifrada, IV e chave privada
-
+        # Lê a chave privada
         with open(arquivo_chave_privada, 'rb') as f:
             chave_privada = serialization.load_pem_private_key(f.read(), password=None)
 
-        with open(arquivo_chaveAES_cifrada, 'rb') as f:
-            dados_chaveAES = f.read()
-        
-        with open(arquivo_mensagem_cifrada, 'rb') as f:
-            dados_msg = f.read()
+    # Leitura de arquivos em diferentes formatos (.txt ou binário)
+        def carregar_arquivo_codificado(caminho):
+            with open(caminho, 'rb') as f:
+                conteudo = f.read()
+            try:
+                return base64.b64decode(conteudo) if codificacao == 'base64' else bytes.fromhex(conteudo.decode())
+            except Exception:
+                return conteudo  # já está em binário puro
+
+        dados_chaveAES = carregar_arquivo_codificado(arquivo_chaveAES_cifrada)
+        dados_msg = carregar_arquivo_codificado(arquivo_mensagem_cifrada)
 
         iv = None
         if modo_aes.upper() == 'CBC':
-            with open(arquivo_iv, 'rb') as f:
-                iv_bytes = f.read()
-            iv = base64.b64decode(iv_bytes) if codificacao == 'base64' else bytes.fromhex(iv_bytes.decode())
+            iv_bytes = carregar_arquivo_codificado(arquivo_iv)
+            iv = iv_bytes
 
-        # Descriptografa chave AES
+        # Descriptografa chave AES com RSA
         chave_aes = chave_privada.decrypt(
-            base64.b64decode(dados_chaveAES) if codificacao == 'base64' else bytes.fromhex(dados_chaveAES.decode()),
+            dados_chaveAES,
             rsa_padding.PKCS1v15()
         )
 
-        # Decodifica mensagem cifrada
-        mensagem_cifrada = base64.b64decode(dados_msg) if codificacao == 'base64' else bytes.fromhex(dados_msg.decode())
-
-        # Descriptografa a mensagem 
+        # Descriptografa mensagem com AES
         modo = modes.CBC(iv) if modo_aes.upper() == 'CBC' else modes.ECB()
         cipher = Cipher(algorithms.AES(chave_aes), modo)
         decryptor = cipher.decryptor()
-        mensagem_padded = decryptor.update(mensagem_cifrada) + decryptor.finalize()
+        mensagem_padded = decryptor.update(dados_msg) + decryptor.finalize()
 
-        # Remove o padding da mensagem
+        # Remove padding
         unpadder = aes_padding.PKCS7(128).unpadder()
         mensagem_clara = unpadder.update(mensagem_padded) + unpadder.finalize()
 
-        # Criação de arquivo da mensagem
         with open(nome_arquivo_saida, 'wb') as f:
             f.write(mensagem_clara)
 
@@ -207,7 +201,7 @@ def abrir_envelope_digital(
     except Exception as e:
         return f"Erro ao abrir envelope digital: {str(e)}"
 
-def gerar_chaves_openssl(tamanho_chave, arq_privada, arq_publica):
+def gerar_chaves_openssl(tamanho_chave=2048, arq_privada='chave_privada.pem', arq_publica='chave_publica.pem'):
     try: #validação
         if not isinstance(tamanho_chave, int):
             raise TypeError("Tamanho da chave deve ser um número inteiro.")
@@ -220,12 +214,6 @@ def gerar_chaves_openssl(tamanho_chave, arq_privada, arq_publica):
             key_size=tamanho_chave
         )
 
-        '''chave_privada_pem = chave_privada.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
-        )
-'''
         chave_privada_pem = chave_privada.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,  # modelo para o CyberChef
