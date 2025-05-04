@@ -92,10 +92,27 @@ function avatarFala(mensagem, mode) {
   setAvatarMode(mode || "default");
 }
 
+// 1.4. FECHAR BALÃO
 function fecharBalão() {
   document.getElementById('speech-bubble').classList.add('hidden');
   setAvatarMode("default");
 }
+
+// 1.5. AUXILIAR PARA ABRIR ENVELOPE
+function alternarCampoIV() {
+  const modo = document.getElementById('modo_aes2').value;
+  const campoIVContainer = document.getElementById('campoIVContainer');
+
+  if (modo === 'ECB') {
+    campoIVContainer.style.display = 'none';
+  } else {
+    campoIVContainer.style.display = 'block';
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  alternarCampoIV();
+});
 
 
 // 2. CRIPTOGRAFIA
@@ -186,7 +203,7 @@ async function abrirEnvelope() {
   const vetorIV = document.getElementById('vetorIV').files[0];
   const chavePrivada = document.getElementById('chavePrivada').files[0];
 
-  if (!mensagemCifrada || !chaveCifrada || !vetorIV || !chavePrivada) {
+  if (!mensagemCifrada || !chaveCifrada || !chavePrivada || (modo === 'CBC' && !vetorIV)) {
     avatarFala('Por favor, selecione todos os arquivos necessários.', 'erro');
     return;
   }
@@ -195,8 +212,11 @@ async function abrirEnvelope() {
   formData.append('mensagem_cifrada', mensagemCifrada);
   formData.append('chave_cifrada', chaveCifrada);
   formData.append('modo', modo);
-  formData.append('iv', vetorIV);
   formData.append('chave_privada', chavePrivada);
+
+  if (modo === 'CBC') {
+    formData.append('iv', vetorIV);
+  }
 
   try {
     const response = await fetch('/abrir_envelope', {
@@ -216,7 +236,7 @@ async function abrirEnvelope() {
       outputContainer.style.display = 'none';
       avatarFala(texto, 'erro');
     }    
-    
+
   } catch (error) {
     console.error('Erro de rede:', error);
     avatarFala(`Erro de rede ou servidor: ${error.message}`, 'erro');
@@ -247,5 +267,3 @@ async function gerarChaves() {
     avatarFala('Erro ao gerar chaves.', 'erro');
   }
 }
-
-
