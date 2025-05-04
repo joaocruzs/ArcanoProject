@@ -57,24 +57,27 @@ def route_criar_envelope():
 @app.route('/abrir_envelope', methods=['POST'])
 def route_abrir_envelope():
     try:
+        modo = request.form.get('modo', 'CBC')
+
         with tempfile.NamedTemporaryFile(delete=False) as tmp_msg_cif, \
              tempfile.NamedTemporaryFile(delete=False) as tmp_chave_cif, \
-             tempfile.NamedTemporaryFile(delete=False) as tmp_iv, \
              tempfile.NamedTemporaryFile(delete=False) as tmp_priv:
 
             tmp_msg_cif.write(request.files['mensagem_cifrada'].read())
             tmp_chave_cif.write(request.files['chave_cifrada'].read())
-            tmp_iv.write(request.files['iv'].read())
             tmp_priv.write(request.files['chave_privada'].read())
 
             caminho_msg = tmp_msg_cif.name
             caminho_chave = tmp_chave_cif.name
-            caminho_iv = tmp_iv.name
             caminho_priv = tmp_priv.name
 
-        modo = request.form.get('modo', 'CBC')
+        caminho_iv = None
+        if modo == 'CBC':
+            with tempfile.NamedTemporaryFile(delete=False) as tmp_iv:
+                tmp_iv.write(request.files['iv'].read())
+                caminho_iv = tmp_iv.name
 
-        abrir_envelope(caminho_msg, caminho_chave, modo, caminho_iv, caminho_priv)
+        abrir_envelope(caminho_msg, caminho_chave, modo, caminho_priv, caminho_iv)
 
         caminho_mensagem_clara = os.path.join('arquivos', 'mensagem_clara.txt')
         with open(caminho_mensagem_clara, 'r', encoding='utf-8') as f:
@@ -82,8 +85,9 @@ def route_abrir_envelope():
 
         os.remove(caminho_msg)
         os.remove(caminho_chave)
-        os.remove(caminho_iv)
         os.remove(caminho_priv)
+        if caminho_iv:
+            os.remove(caminho_iv)
         os.remove(caminho_mensagem_clara)
 
         return mensagem
