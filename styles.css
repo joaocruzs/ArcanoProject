@@ -151,6 +151,11 @@ body {
   width: 100%;
 }
 
+p {
+  font-size: 0.7rem;
+  margin: 3px 0;
+}
+
 /* 2. MAIN */
 main {
   flex: 1;
@@ -212,11 +217,6 @@ main button:hover {
   cursor: pointer;
   padding: 0;
   margin: 0;
-}
-
-p {
-  font-size: 0.7rem;
-  margin: 3px 0;
 }
 
 /* 3. OUTPUT */
