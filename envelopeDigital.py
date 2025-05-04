@@ -20,13 +20,13 @@ def criar_envelope(arquivo_claro, chave_publica_destinatario, modo, tam, saida):
         nome_arquivo_iv='arquivos/vetor_inicializacao.txt'
     )
 
-def abrir_envelope(mensagem_cifrada, chave_cifrada, modo, iv_hex, chave_privada_destinatario):
+def abrir_envelope(mensagem_cifrada, chave_cifrada, modo, chave_privada_destinatario,  iv_hex):
     return abrir_envelope_digital(
         arquivo_mensagem_cifrada=mensagem_cifrada,
         arquivo_chaveAES_cifrada=chave_cifrada,
         modo_aes=modo,
-        arquivo_iv=iv_hex,
         arquivo_chave_privada=chave_privada_destinatario,
+        arquivo_iv=iv_hex,
         codificacao='hex',
         nome_arquivo_saida='arquivos/mensagem_clara.txt'
     )
@@ -141,9 +141,9 @@ def criar_envelope_digital(
 def abrir_envelope_digital(
         arquivo_mensagem_cifrada, 
         arquivo_chaveAES_cifrada, 
-        modo_aes,
-        arquivo_iv, 
-        arquivo_chave_privada,  
+        modo_aes, 
+        arquivo_chave_privada,
+        arquivo_iv,  
         codificacao='base64', 
         nome_arquivo_saida='mensagem_clara.txt'):
     
