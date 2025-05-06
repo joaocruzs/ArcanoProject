@@ -1,16 +1,14 @@
 
-import os
-import base64
 from cryptography.hazmat.primitives import serialization, padding as aes_padding
 from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
-
+import os, base64
 
 # === FUNÇÕES  ===
 
 def criar_envelope(arquivo_claro, chave_publica_destinatario, modo, tam, saida):
-    return criar_envelope_digital(
+    return criar_envelope_modificado(
         caminho_arquivo_mensagem=arquivo_claro,
         caminho_chave_publica=chave_publica_destinatario,
         modo_aes=modo,
@@ -21,8 +19,8 @@ def criar_envelope(arquivo_claro, chave_publica_destinatario, modo, tam, saida):
         nome_arquivo_iv='arquivos/vetor_inicializacao.txt'
     )
 
-def abrir_envelope(mensagem_cifrada, chave_cifrada, modo, chave_privada_destinatario, iv_hex,):
-    return abrir_envelope_digital(
+def abrir_envelope(mensagem_cifrada, chave_cifrada, modo, chave_privada_destinatario, iv_hex):
+    return abrir_envelope_modificado(
         arquivo_mensagem_cifrada=mensagem_cifrada,
         arquivo_chaveAES_cifrada=chave_cifrada,
         modo_aes=modo,
@@ -62,144 +60,97 @@ def validar_chave_privada(path_arquivo):
         return hasattr(chave, 'decrypt')
     except Exception:
         return False
-
-
-def criar_envelope_digital(
-        caminho_arquivo_mensagem, 
-        caminho_chave_publica, 
-        modo_aes, 
-        tam_chave, 
-        saida, 
-        nome_arquivo_mensagem='mensagem_cifrada.txt', 
-        nome_arquivo_chave='chave_sessao_cifrada.txt', 
-        nome_arquivo_iv='vetor_inicializacao.txt'):
     
-    try: # validações
-        if not os.path.isfile(caminho_arquivo_mensagem):
-            raise FileNotFoundError(f"Arquivo '{caminho_arquivo_mensagem}' não encontrado.")
-        if not os.path.isfile(caminho_chave_publica):
-            raise FileNotFoundError(f"Arquivo '{caminho_chave_publica}' não encontrado.")
-        if not validar_chave_publica(caminho_chave_publica):
-            raise ValueError("O arquivo informado não contém uma chave pública RSA válida.")
-        if modo_aes.upper() not in ('CBC', 'ECB'):
-            raise ValueError("Modo AES deve ser 'CBC' ou 'ECB'.")
-        if tam_chave not in (128, 192, 256):
-            raise ValueError("Tamanho da chave AES deve ser 128, 192 ou 256 bits.")
-        if saida not in ('hex', 'base64'):
-            raise ValueError("Formato de saída deve ser 'hex' ou 'base64'.")
-        
-    # Leitura da mensagem e da chave do destinatário
-        with open(caminho_arquivo_mensagem, 'rb') as f:
-            mensagem = f.read()
-
-        with open(caminho_chave_publica, 'rb') as f:
-            chave_publica = serialization.load_pem_public_key(f.read(), backend=default_backend())
-
-        # criação de chave AES e IV para CBC
-        chave_aes = os.urandom(tam_chave // 8)
-        iv = os.urandom(16) if modo_aes.upper() == 'CBC' else None
-
-        # adiciona padding na mensagem 
-        padder = aes_padding.PKCS7(128).padder()
-        mensagem_padded = padder.update(mensagem) + padder.finalize()
-
-        # criptografa a mensagem AES
-        modo = modes.CBC(iv) if modo_aes.upper() == 'CBC' else modes.ECB()
-        cifra = Cipher(algorithms.AES(chave_aes), modo, backend=default_backend())
-        criptografar = cifra.encryptor()
-        mensagem_cifrada = criptografar.update(mensagem_padded) + criptografar.finalize()
-
-        # criptografa chave AES
-        chave_aes_cifrada = chave_publica.encrypt(chave_aes, rsa_padding.PKCS1v15())
-
-        print(chave_aes_cifrada)
-
-    # Criação dos arquivos de saída
-        with open(nome_arquivo_mensagem, 'wb') as f:
-            f.write(padronizar_base64_saida(mensagem_cifrada, saida))
-
-        with open(nome_arquivo_chave, 'wb') as f:
-            f.write(padronizar_base64_saida(chave_aes_cifrada, saida))
-
-        if iv:
-            with open(nome_arquivo_iv, 'wb') as f:
-                f.write(padronizar_base64_saida(iv, saida))
-        
-        print(nome_arquivo_chave)
-        return "Envelope digital criado com sucesso."
-        
-    except Exception as e:
-        return f"Erro ao criar envelope digital: {str(e)}"
-
-def abrir_envelope_digital(
-    arquivo_mensagem_cifrada, 
-    arquivo_chaveAES_cifrada, 
-    modo_aes, 
-    arquivo_chave_privada, 
-    arquivo_iv,
-    codificacao='base64', 
-    nome_arquivo_saida='mensagem_clara.txt'
+def criar_envelope_modificado(
+    caminho_arquivo_mensagem,
+    caminho_chave_publica,
+    modo_aes,
+    tam_chave,
+    saida,
+    nome_arquivo_mensagem,
+    nome_arquivo_chave,
+    nome_arquivo_iv
 ):
-    try:
-        # Validações
-        for caminho in [arquivo_mensagem_cifrada, arquivo_chaveAES_cifrada, arquivo_chave_privada]:
-            if not os.path.isfile(caminho):
-                raise FileNotFoundError(f"Arquivo '{caminho}' não encontrado.")
-        if not validar_chave_privada(arquivo_chave_privada):
-            raise ValueError("O arquivo informado não contém uma chave privada RSA válida.")
-        if modo_aes.upper() not in ('CBC', 'ECB'):
-            raise ValueError("Modo AES inválido. Use 'CBC' ou 'ECB'.")
-        if codificacao not in ('hex', 'base64'):
-            raise ValueError("Codificação deve ser 'hex' ou 'base64'.")
-        if modo_aes.upper() == 'CBC' and not arquivo_iv:
-            raise ValueError("Modo CBC exige o arquivo de IV.")
-        if arquivo_iv and not os.path.isfile(arquivo_iv):
-            raise FileNotFoundError(f"Arquivo de IV '{arquivo_iv}' não encontrado.")
+    if not os.path.isfile(caminho_arquivo_mensagem):
+        raise FileNotFoundError(f"Arquivo '{caminho_arquivo_mensagem}' não encontrado.")
+    if not os.path.isfile(caminho_chave_publica):
+        raise FileNotFoundError(f"Arquivo '{caminho_chave_publica}' não encontrado.")
 
-        # Lê a chave privada
-        with open(arquivo_chave_privada, 'rb') as f:
-            chave_privada = serialization.load_pem_private_key(f.read(), password=None)
+    with open(caminho_arquivo_mensagem, 'rb') as f:
+        mensagem = f.read()
+    with open(caminho_chave_publica, 'rb') as f:
+        chave_publica = serialization.load_pem_public_key(f.read(), backend=default_backend())
 
-    # Leitura de arquivos em diferentes formatos (.txt ou binário)
-        def carregar_arquivo_codificado(caminho):
-            with open(caminho, 'rb') as f:
-                conteudo = f.read()
-            try:
-                return base64.b64decode(conteudo) if codificacao == 'base64' else bytes.fromhex(conteudo.decode())
-            except Exception:
-                return conteudo  # já está em binário puro
+    chave_aes = os.urandom(tam_chave // 8)
+    iv = os.urandom(16) if modo_aes.upper() == 'CBC' else None
 
-        dados_chaveAES = carregar_arquivo_codificado(arquivo_chaveAES_cifrada)
-        dados_msg = carregar_arquivo_codificado(arquivo_mensagem_cifrada)
+    padder = aes_padding.PKCS7(128).padder()
+    mensagem_padded = padder.update(mensagem) + padder.finalize()
 
+    modo = modes.CBC(iv) if modo_aes.upper() == 'CBC' else modes.ECB()
+    cifra = Cipher(algorithms.AES(chave_aes), modo, backend=default_backend())
+    criptografar = cifra.encryptor()
+    mensagem_cifrada = criptografar.update(mensagem_padded) + criptografar.finalize()
+
+    chave_codificada = base64.b64encode(chave_aes) if saida == 'base64' else chave_aes.hex().encode()
+    chave_aes_cifrada = chave_publica.encrypt(chave_codificada, rsa_padding.PKCS1v15())
+
+    with open(nome_arquivo_mensagem, 'wb') as f:
+        f.write(base64.b64encode(mensagem_cifrada) if saida == 'base64' else mensagem_cifrada.hex().encode())
+
+    with open(nome_arquivo_chave, 'wb') as f:
+        f.write(base64.b64encode(chave_aes_cifrada) if saida == 'base64' else chave_aes_cifrada.hex().encode())
+
+    if iv:
+        with open(nome_arquivo_iv, 'wb') as f:
+            f.write(base64.b64encode(iv) if saida == 'base64' else iv.hex().encode())
+
+    return "Envelope digital (modificado) criado com sucesso."
+
+
+def abrir_envelope_modificado(
+    arquivo_mensagem_cifrada,
+    arquivo_chaveAES_cifrada,
+    modo_aes,
+    arquivo_chave_privada,
+    arquivo_iv,
+    codificacao,
+    nome_arquivo_saida
+):
+    with open(arquivo_chave_privada, 'rb') as f:
+        chave_privada = serialization.load_pem_private_key(f.read(), password=None)
+
+    with open(arquivo_chaveAES_cifrada, 'rb') as f:
+        dados_chaveAES = f.read()
+    with open(arquivo_mensagem_cifrada, 'rb') as f:
+        dados_msg = f.read()
+    if modo_aes.upper() == 'CBC' and arquivo_iv:
+        with open(arquivo_iv, 'r') as f:
+            iv_conteudo = f.read().strip()
+        iv = base64.b64decode(iv_conteudo) if codificacao == 'base64' else bytes.fromhex(iv_conteudo)
+    else:
         iv = None
-        if modo_aes.upper() == 'CBC':
-            iv_bytes = carregar_arquivo_codificado(arquivo_iv)
-            iv = iv_bytes
 
-        # Descriptografa chave AES com RSA
-        chave_aes = chave_privada.decrypt(
-            dados_chaveAES,
-            rsa_padding.PKCS1v15()
-        )
+    chave_codificada = chave_privada.decrypt(
+        base64.b64decode(dados_chaveAES) if codificacao == 'base64' else bytes.fromhex(dados_chaveAES.decode()),
+        rsa_padding.PKCS1v15()
+    )
 
-        # Descriptografa mensagem com AES
-        modo = modes.CBC(iv) if modo_aes.upper() == 'CBC' else modes.ECB()
-        cipher = Cipher(algorithms.AES(chave_aes), modo)
-        decryptor = cipher.decryptor()
-        mensagem_padded = decryptor.update(dados_msg) + decryptor.finalize()
+    chave_aes = base64.b64decode(chave_codificada) if codificacao == 'base64' else bytes.fromhex(chave_codificada.decode())
 
-        # Remove padding
-        unpadder = aes_padding.PKCS7(128).unpadder()
-        mensagem_clara = unpadder.update(mensagem_padded) + unpadder.finalize()
+    modo = modes.CBC(iv) if modo_aes.upper() == 'CBC' else modes.ECB()
+    cipher = Cipher(algorithms.AES(chave_aes), modo)
+    decryptor = cipher.decryptor()
+    dados_msg = base64.b64decode(dados_msg) if codificacao == 'base64' else bytes.fromhex(dados_msg.decode())
+    mensagem_padded = decryptor.update(dados_msg) + decryptor.finalize()
 
-        with open(nome_arquivo_saida, 'wb') as f:
-            f.write(mensagem_clara)
+    unpadder = aes_padding.PKCS7(128).unpadder()
+    mensagem_clara = unpadder.update(mensagem_padded) + unpadder.finalize()
 
-        return f"Envelope aberto com sucesso. Mensagem salva em '{nome_arquivo_saida}'."
+    with open(nome_arquivo_saida, 'wb') as f:
+        f.write(mensagem_clara)
 
-    except Exception as e:
-        return f"Erro ao abrir envelope digital: {str(e)}"
+    return f"Envelope modificado aberto com sucesso. Mensagem salva em '{nome_arquivo_saida}'."
 
 def gerar_chaves_openssl(tamanho_chave=2048, arq_privada='chave_privada.pem', arq_publica='chave_publica.pem'):
     try: #validação
