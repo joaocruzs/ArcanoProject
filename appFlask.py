@@ -2,7 +2,7 @@ from flask import Flask, request, send_from_directory
 from flask_cors import CORS
 import tempfile
 import os
-from envelopeDigital import criar_envelope, abrir_envelope, gerar_chaves
+from envelope_modificado import criar_envelope, abrir_envelope, gerar_chaves
 
 
 app = Flask(__name__, static_folder='', static_url_path='')
@@ -15,7 +15,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def index():
     return app.send_static_file('index.html')
 
-# 1. SERVIR ARQUIVOS GERADOS
+# 1. GUARDAR ARQUIVOS GERADOS
 @app.route('/arquivos/<path:nome_arquivo>')
 def servir_arquivo(nome_arquivo):
     return send_from_directory(UPLOAD_FOLDER, nome_arquivo)
