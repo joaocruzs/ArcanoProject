@@ -2,7 +2,7 @@ from flask import Flask, request, send_from_directory
 from flask_cors import CORS
 import tempfile
 import os
-from envelope_modificado import criar_envelope, abrir_envelope, gerar_chaves
+from envelope_digital import criar_envelope, abrir_envelope, gerar_chaves
 
 
 app = Flask(__name__, static_folder='', static_url_path='')
