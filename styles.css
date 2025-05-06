@@ -258,6 +258,7 @@ main button:hover {
   background-color: #004999;
 }
 
+/* EXTRAS */
 #decryptOutputContainer {
   display: none;
   margin-top: 1em;
