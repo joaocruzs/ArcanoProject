@@ -98,7 +98,7 @@ function fecharBalão() {
   setAvatarMode("default");
 }
 
-// 1.5. AUXILIAR PARA ABRIR ENVELOPE
+// 1.5. ENTRADA IV VÁRIÁVEL
 function alternarCampoIV() {
   const modo = document.getElementById('modo_aes2').value;
   const campoIVContainer = document.getElementById('campoIVContainer');
@@ -157,7 +157,7 @@ async function criarEnvelope() {
     ];
 
     const outputArea = document.getElementById('cryptOutput');
-    outputArea.innerHTML = ''; // limpa área anterior
+    outputArea.innerHTML = '';
 
     for (const { filename, label } of arquivos) {
       try {
